@@ -1,5 +1,5 @@
 FROM httpd:2.4
-
+USER 1001
 # Copy the HTML file to the Apache document root
 COPY summary-report-generator-latest.html /usr/local/apache2/htdocs/
 
