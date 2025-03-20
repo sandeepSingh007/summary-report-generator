@@ -1,7 +1,7 @@
 FROM httpd:2.4
 
 # Copy the HTML file to the Apache document root
-COPY summary-report-generator-latest.html /usr/local/apache2/htdocs/
+COPY summary-report-generator-v2.html /usr/local/apache2/htdocs/
 
 # Modify httpd.conf to:
 # 1. Change Listen port from 80 to 8080
