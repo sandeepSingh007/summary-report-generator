@@ -1,5 +1,5 @@
 FROM httpd:2.4
-USER 1001
+
 # Copy the HTML file to the Apache document root
 COPY summary-report-generator-latest.html /usr/local/apache2/htdocs/
 
@@ -9,5 +9,5 @@ COPY summary-report-generator-latest.html /usr/local/apache2/htdocs/
 RUN sed -i 's/Listen 80/Listen 8080/' /usr/local/apache2/conf/httpd.conf && \
     sed -i 's|DirectoryIndex index.html|DirectoryIndex summary-report-generator-latest.html|' /usr/local/apache2/conf/httpd.conf && \
     rm -f /usr/local/apache2/htdocs/index.html  # Remove the default index.html file
-RUN chown -R 1001:0 /usr/local/apache2/logs
+
 EXPOSE 8080
