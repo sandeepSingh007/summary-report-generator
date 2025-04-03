@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summary Report Generator</title>
+    <!-- Include Showdown for Markdown conversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <style>
+        /* Common styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        
+        h1, h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+        
+        .action-taken {
+            background-color: #e8f5e9;
+        }
+        
+        .issues-fixed {
+            background-color: #e3f2fd;
+        }
+        
+        .pending-issues {
+            background-color: #ffebee;
+        }
+        
+        .action-plan {
+            background-color: #fff8e1;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            flex: 1;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="text"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+            line-height: 1.5;
+            font-family: monospace;
+            resize: vertical;
+        }
+        
+        .markdown-help {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        button.btn-danger {
+            background-color: #f44336;
+        }
+        
+        button.btn-primary {
+            background-color: #2196F3;
+        }
+        
+        .item-container {
+            margin-bottom: 15px;
+        }
+        
+        .item {
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 4px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .item-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            align-items: center;
+        }
+        
+        .remove-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .status-completed {
+            background-color: #8bc34a;
+        }
+        
+        .status-success {
+            background-color: #4caf50;
+        }
+        
+        .status-pending {
+            background-color: #ff9800;
+        }
+        
+        .status-planned {
+            background-color: #ff9800;
+        }
+        
+        .status-failed {
+            background-color: #f44336;
+        }
+        
+        .generate-button {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            padding: 12px 15px;
+            font-size: 16px;
+            background-color: #4285F4;
+        }
+        
+        /* Report styles */
+        .report-container {
+            max-width: 900px;
+            margin: 30px auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            padding: 25px;
+        }
+        
+        .report-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .report-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .customer-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        
+        .report-section {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .report-section-title {
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: rgba(0,0,0,0.05);
+            font-weight: bold;
+        }
+        
+        td.status-cell {
+            width: 100px;
+            text-align: center;
+        }
+        
+        .download-button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 12px 15px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        /* Print styles */
+        @media print {
+            .container,
+            .generate-button,
+            .download-button {
+                display: none !important;
+            }
+            
+            .report-container {
+                box-shadow: none;
+            }
+            
+            /* Ensure colors are preserved when printing */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+        }
+        
+        /* Markdown content styles */
+        .markdown-content h1 {
+            font-size: 1.8em;
+            margin-top: 0.8em;
+            margin-bottom: 0.6em;
+        }
+        
+        .markdown-content h2 {
+            font-size: 1.5em;
+            margin-top: 0.7em;
+            margin-bottom: 0.5em;
+        }
+        
+        .markdown-content h3 {
+            font-size: 1.3em;
+            margin-top: 0.6em;
+            margin-bottom: 0.4em;
+        }
+        
+        .markdown-content p {
+            margin-bottom: 1em;
+            line-height: 1.5;
+        }
+        
+        .markdown-content ul, .markdown-content ol {
+            margin-bottom: 1em;
+            padding-left: 2em;
+        }
+        
+        .markdown-content li {
+            margin-bottom: 0.5em;
+        }
+        
+        .markdown-content code {
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
+        .markdown-content pre {
+            background-color: #f6f8fa;
+            padding: 1em;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        
+        .markdown-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1em;
+            color: #666;
+            margin-left: 0;
+        }
+        
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1em;
+        }
+        
+        .markdown-content table th,
+        .markdown-content table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        
+        .markdown-content table th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Summary Report Generator</h1>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="customer">Customer:</label>
+                <input type="text" id="customer" placeholder="Enter customer name">
+            </div>
+            <div class="form-group">
+                <label for="customer-rep">Customer Representative:</label>
+                <input type="text" id="customer-rep" placeholder="Enter customer representative">
+            </div>
+            <div class="form-group">
+                <label for="report-date">Date:</label>
+                <input type="date" id="report-date">
+            </div>
+        </div>
+        
+        <div class="section action-taken">
+            <h2>Action Taken</h2>
+            <span class="markdown-help">Supports Markdown: **bold**, *italic*, ## headings, - list items, etc.</span>
+            <div id="action-taken-items" class="item-container">
+                <!-- Action taken items will be added here -->
+            </div>
+            <button onclick="addItem('action-taken')">+ Add Action Item</button>
+        </div>
+        
+        <div class="section issues-fixed">
+            <h2>Issues Fixed</h2>
+            <span class="markdown-help">Supports Markdown: **bold**, *italic*, ## headings, - list items, etc.</span>
+            <div id="issues-fixed-items" class="item-container">
+                <!-- Issues fixed will be added here -->
+            </div>
+            <button onclick="addItem('issues-fixed')">+ Add Fixed Issue</button>
+        </div>
+        
+        <div class="section pending-issues">
+            <h2>Pending Issues</h2>
+            <span class="markdown-help">Supports Markdown: **bold**, *italic*, ## headings, - list items, etc.</span>
+            <div id="pending-issues-items" class="item-container">
+                <!-- Pending issues will be added here -->
+            </div>
+            <button onclick="addItem('pending-issues')">+ Add Pending Issue</button>
+        </div>
+        
+        <div class="section action-plan">
+            <h2>Action Plan</h2>
+            <span class="markdown-help">Supports Markdown: **bold**, *italic*, ## headings, - list items, etc.</span>
+            <div id="action-plan-items" class="item-container">
+                <!-- Action plan items will be added here -->
+            </div>
+            <button onclick="addItem('action-plan')">+ Add Plan Item</button>
+        </div>
+        
+        <div class="section">
+            <h2>Summary</h2>
+            <span class="markdown-help">Supports Markdown: **bold**, *italic*, ## headings, - list items, etc.</span>
+            <textarea id="summary-text" placeholder="Enter a summary of the status, achievements, and next steps using Markdown..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="engineer-name">Report Prepared By:</label>
+            <input type="text" id="engineer-name" placeholder="Enter your name">
+        </div>
+        
+        <button class="generate-button" onclick="generateReport()">Generate Report</button>
+    </div>
+    
+    <button id="download-button" class="download-button" onclick="downloadPDF()" style="display:none;">Download as PDF</button>
+    
+    <script>
+        // Initialize Markdown converter
+        const converter = new showdown.Converter({
+            tables: true,
+            simplifiedAutoLink: true,
+            strikethrough: true,
+            tasklists: true
+        });
+        
+        // Initialize counters
+        let actionTakenCounter = 0;
+        let issuesFixedCounter = 0;
+        let pendingIssuesCounter = 0;
+        let actionPlanCounter = 0;
+        
+        // Set current date on load
+        window.onload = function() {
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            document.getElementById('report-date').value = formattedDate;
+            
+            // Add initial items
+            addItem('action-taken');
+            addItem('issues-fixed');
+            addItem('pending-issues');
+            addItem('action-plan');
+        };
+        
+        // Add new item to section
+        function addItem(section) {
+            const container = document.getElementById(`${section}-items`);
+            let item = document.createElement('div');
+            item.className = 'item';
+            
+            // Set appropriate counter and options based on section type
+            let counter, statusOptions, defaultValue;
+            
+            if (section === 'action-taken') {
+                counter = ++actionTakenCounter;
+                defaultValue = 'completed';
+                statusOptions = `
+                    <option value="completed" selected>Completed</option>
+                    <option value="success">Success</option>
+                    <option value="pending">Pending</option>
+                    <option value="failed">Failed</option>
+                `;
+            } else if (section === 'issues-fixed') {
+                counter = ++issuesFixedCounter;
+                defaultValue = 'completed';
+                statusOptions = `
+                    <option value="completed" selected>Completed</option>
+                    <option value="success">Resolved</option>
+                    <option value="pending">Partially Resolved</option>
+                    <option value="failed">Failed</option>
+                `;
+            } else if (section === 'pending-issues') {
+                counter = ++pendingIssuesCounter;
+                defaultValue = 'pending';
+                statusOptions = `
+                    <option value="pending" selected>Pending</option>
+                    <option value="completed">Completed</option>
+                    <option value="success">In Progress</option>
+                    <option value="failed">Blocked</option>
+                `;
+            } else if (section === 'action-plan') {
+                counter = ++actionPlanCounter;
+                defaultValue = 'planned';
+                statusOptions = `
+                    <option value="planned" selected>Planned</option>
+                    <option value="completed">Completed</option>
+                    <option value="success">Started</option>
+                    <option value="failed">Blocked</option>
+                `;
+            }
+            
+            // Set placeholder and sample markdown based on section
+            let placeholder, sampleText;
+            if (section === 'action-taken') {
+                placeholder = "Enter action taken details using Markdown";
+                sampleText = "Test Case 1: Tested the Playbook **(file.yml)** with **SELinux disabled**\n\n- Completed the domain join\n- Verified user login";
+            } else if (section === 'issues-fixed') {
+                placeholder = "Enter details about the fixed issue using Markdown";
+                sampleText = "Fixed issue with **user authentication** in the authentication module";
+            } else if (section === 'pending-issues') {
+                placeholder = "Enter details about the pending issue using Markdown";
+                sampleText = "Need to resolve issue with **package dependencies** in the installation script";
+            } else if (section === 'action-plan') {
+                placeholder = "Enter action plan details using Markdown";
+                sampleText = "Implement fixes for the **sshpass** package installation issues";
+            }
+            
+            // Create HTML for the item
+            let itemHtml = `
+                <textarea placeholder="${placeholder}" class="item-text">${sampleText}</textarea>
+                <div class="item-actions">
+                    <div>
+                        <label>Status: </label>
+                        <select class="item-status">
+                            ${statusOptions}
+                        </select>
+                    </div>
+            `;
+            
+            // Add date field for action plan items
+            if (section === 'action-plan') {
+                const nextWeek = new Date();
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                const defaultDate = nextWeek.toISOString().split('T')[0];
+                
+                itemHtml += `
+                    <div>
+                        <label>Target Date: </label>
+                        <input type="date" class="item-date" value="${defaultDate}">
+                    </div>
+                `;
+            }
+            
+            // Add remove button
+            itemHtml += `
+                    <button class="remove-btn" onclick="removeItem(this)">Remove</button>
+                </div>
+            `;
+            
+            item.innerHTML = itemHtml;
+            container.appendChild(item);
+        }
+        
+        // Remove item
+        function removeItem(button) {
+            const item = button.closest('.item');
+            if (confirm('Are you sure you want to remove this item?')) {
+                item.parentNode.removeChild(item);
+            }
+        }
+        
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+        }
+        
+        // Convert markdown to HTML
+        function markdownToHtml(markdown) {
+            if (!markdown) return '';
+            return converter.makeHtml(markdown);
+        }
+        
+        // Collect items from a section
+        function collectItems(section) {
+            const container = document.getElementById(`${section}-items`);
+            const items = container.querySelectorAll('.item');
+            const result = [];
+            
+            items.forEach(item => {
+                const text = item.querySelector('.item-text').value.trim();
+                const status = item.querySelector('.item-status').value;
+                let targetDate = null;
+                
+                // Get target date for action plan items
+                if (section === 'action-plan') {
+                    targetDate = item.querySelector('.item-date').value;
+                }
+                
+                if (text) {
+                    result.push({
+                        text,
+                        status,
+                        targetDate
+                    });
+                }
+            });
+            
+            return result;
+        }
+        
+        // Generate the report
+        function generateReport() {
+            // Get basic info
+            const customer = document.getElementById('customer').value || 'N/A';
+            const customerRep = document.getElementById('customer-rep').value || 'N/A';
+            const date = document.getElementById('report-date').value;
+            const formattedDate = formatDate(date);
+            const engineerName = document.getElementById('engineer-name').value || 'N/A';
+            const summaryText = document.getElementById('summary-text').value || 'No summary provided.';
+            
+            // Collect items from each section
+            const actionTakenItems = collectItems('action-taken');
+            const issuesFixedItems = collectItems('issues-fixed');
+            const pendingIssuesItems = collectItems('pending-issues');
+            const actionPlanItems = collectItems('action-plan');
+            
+            // Create status label mapping
+            const statusLabels = {
+                'completed': 'Completed',
+                'success': 'Success',
+                'pending': 'Pending',
+                'planned': 'Planned',
+                'failed': 'Failed'
+            };
+            
+            // Create report container if it doesn't exist
+            let reportContainer = document.getElementById('report-container');
+            if (!reportContainer) {
+                reportContainer = document.createElement('div');
+                reportContainer.id = 'report-container';
+                reportContainer.className = 'report-container';
+                document.body.appendChild(reportContainer);
+            }
+            
+            // Generate HTML for the report
+            let reportHtml = `
+                <div class="report-header">
+                    <h1 class="report-title">Summary Report</h1>
+                    <div class="customer-info">
+                        <div><strong>Customer:</strong> ${customer}</div>
+                        <div><strong>Customer Representative:</strong> ${customerRep}</div>
+                    </div>
+                    <div><strong>Date:</strong> ${formattedDate}</div>
+                </div>
+            `;
+            
+            // Action Taken section
+            reportHtml += `
+                <div class="report-section action-taken">
+                    <h2 class="report-section-title">Action Taken</h2>
+            `;
+            
+            if (actionTakenItems.length > 0) {
+                reportHtml += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">#</th>
+                                <th>Description</th>
+                                <th style="width: 100px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                actionTakenItems.forEach((item, index) => {
+                    const htmlContent = markdownToHtml(item.text);
+                    reportHtml += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td class="markdown-content">${htmlContent}</td>
+                            <td class="status-cell">
+                                <span class="status-badge status-${item.status}">${statusLabels[item.status]}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                reportHtml += `
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                reportHtml += '<p>No actions recorded.</p>';
+            }
+            
+            reportHtml += '</div>';
+            
+            // Issues Fixed section
+            reportHtml += `
+                <div class="report-section issues-fixed">
+                    <h2 class="report-section-title">Issues Fixed</h2>
+            `;
+            
+            if (issuesFixedItems.length > 0) {
+                reportHtml += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">#</th>
+                                <th>Description</th>
+                                <th style="width: 100px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                issuesFixedItems.forEach((item, index) => {
+                    const htmlContent = markdownToHtml(item.text);
+                    reportHtml += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td class="markdown-content">${htmlContent}</td>
+                            <td class="status-cell">
+                                <span class="status-badge status-${item.status}">${statusLabels[item.status]}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                reportHtml += `
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                reportHtml += '<p>No fixed issues recorded.</p>';
+            }
+            
+            reportHtml += '</div>';
+            
+            // Pending Issues section
+            reportHtml += `
+                <div class="report-section pending-issues">
+                    <h2 class="report-section-title">Pending Issues</h2>
+            `;
+            
+            if (pendingIssuesItems.length > 0) {
+                reportHtml += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">#</th>
+                                <th>Description</th>
+                                <th style="width: 100px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                pendingIssuesItems.forEach((item, index) => {
+                    const htmlContent = markdownToHtml(item.text);
+                    reportHtml += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td class="markdown-content">${htmlContent}</td>
+                            <td class="status-cell">
+                                <span class="status-badge status-${item.status}">${statusLabels[item.status]}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                reportHtml += `
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                reportHtml += '<p>No pending issues recorded.</p>';
+            }
+            
+            reportHtml += '</div>';
+            
+            // Action Plan section
+            reportHtml += `
+                <div class="report-section action-plan">
+                    <h2 class="report-section-title">Action Plan</h2>
+            `;
+            
+            if (actionPlanItems.length > 0) {
+                reportHtml += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">#</th>
+                                <th>Description</th>
+                                <th style="width: 100px;">Target Date</th>
+                                <th style="width: 100px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                actionPlanItems.forEach((item, index) => {
+                    const htmlContent = markdownToHtml(item.text);
+                    const targetDateFormatted = item.targetDate ? formatDate(item.targetDate) : 'N/A';
+                    
+                    reportHtml += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td class="markdown-content">${htmlContent}</td>
+                            <td style="text-align: center;">${targetDateFormatted}</td>
+                            <td class="status-cell">
+                                <span class="status-badge status-${item.status}">${statusLabels[item.status]}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                reportHtml += `
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                reportHtml += '<p>No action plan items recorded.</p>';
+            }
+            
+            reportHtml += '</div>';
+            
+            // Summary section
+            reportHtml += `
+                <div class="report-section" style="background-color: #f3e5f5;">
+                    <h2 class="report-section-title">Summary</h2>
+                    <div class="markdown-content">
+                        ${markdownToHtml(summaryText)}
+                    </div>
+                </div>
+                <div style="text-align: right; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <div>Report prepared by:</div>
+                    <div style="font-weight: bold; margin-top: 10px;">${engineerName}</div>
+                </div>
+            `;
+            
+            // Update the report container
+            reportContainer.innerHTML = reportHtml;
+            
+            // Show download button
+            document.getElementById('download-button').style.display = 'block';
+            
+            // Scroll to the report
+            reportContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Function to download as PDF
+        function downloadPDF() {
+            // Hide elements not needed in PDF
+            document.querySelector('.container').style.display = 'none';
+            document.getElementById('download-button').style.display = 'none';
+            
+            // Prepare for printing
+            window.print();
+            
+            // Restore elements after printing
+            setTimeout(function() {
+                document.querySelector('.container').style.display = 'block';
+                document.getElementById('download-button').style.display = 'block';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
