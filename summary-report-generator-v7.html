@@ -24,6 +24,10 @@
             background-color: rgba(255, 255, 255, 0.8);
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-width: 1000px; /* Make this wider than the container */
+            width: 95%;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         h1.main-title {
@@ -287,6 +291,9 @@
         
         /* Print styles */
         @media print {
+            .title-container {
+                 display: none !important;
+              }
             .container,
             .generate-button,
             .download-button {
